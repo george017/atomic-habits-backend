@@ -1,53 +1,72 @@
-const express = require('express');
-const router = express.Router();
+var express = require('express');
+var router = express.Router();
 const Habit = require('../models/Habit');
+const jwt = require('jsonwebtoken');
+var mongoose = require('mongoose');
+/* GET home page. */
 
-// 1. LEER TODO (Obtener todos los hábitos)
-// Esta es la ruta que te faltaba para que el GET /api/habits funcione
-router.get('/', async (req, res) => {
-  try {
-    const habits = await Habit.find();
+
+router.get('/',  function(req, res, next) {
+  res.render('index', { title: 'Express' });
+});
+
+router.get('/habits', async (req, res) => {
+  try{
+    const habits = await Habit.find({});
     res.json(habits);
-  } catch (err) {
-    res.status(500).json({ error: "Error al obtener los hábitos: " + err.message });
+  }catch(err){
+    console.error(err);
+    res.status(500).json({ message: 'Error retrieving habits' });
+  }
+
+});
+router.post('/habits', async (req, res) => {
+  try{
+    let { title, description} = req.body;
+    const habit = new Habit({ title, description });
+    await habit.save();
+    res.json(habit);
+  }catch(err){
+    console.error(err);
+    res.status(400).json({ message: 'Error creating habit' });
+  }
+});
+router.delete('/habits/:id', async (req, res) => {
+  try{
+    await Habit.findByIdAndDelete(req.params.id);
+    res.json({ message: 'Habit deleted' });
+  }catch(err){
+    res.status(500).json({ message: 'Habit not found' });
+  }
+});
+router.patch('/habits/markasdone/:id',  async (req, res) => {
+  try{
+    const habit = await Habit.findById(req.params.id);
+    habit.lastDone = new Date();
+    if(timeDifferenceInHours(habit.lastDone, habit.lastUpdate) < 24){
+      habit.days = timeDifferenceInDays(habit.lastDone, habit.startedAt);
+      habit.lastUpdate = new Date();
+      habit.save();
+      res.status(200).json({'message': 'Habit marked as done'});
+    }else{
+      habit.days = 0;
+      habit.lastUpdate = new Date();
+      habit.startedAt = new Date();
+      habit.save();
+      res.status(200).json({'message': 'Habit restarted'});
+    }
+  }catch(err){
+    console.log(err);
+    res.status(500).json({ message: 'Habit not found' });
   }
 });
 
-// 2. CREAR (Alta)
-router.post('/', async (req, res) => {
-  try {
-    const newHabit = new Habit(req.body);
-    await newHabit.save();
-    res.status(201).json(newHabit);
-  } catch (err) {
-    res.status(400).json({ error: "Error al crear el hábito: " + err.message });
-  }
-});
-
-// 3. ACTUALIZAR (Cambios)
-router.patch('/:id', async (req, res) => {
-  try {
-    const updatedHabit = await Habit.findByIdAndUpdate(
-      req.params.id, 
-      req.body, 
-      { new: true }
-    );
-    if (!updatedHabit) return res.status(404).json({ message: "No se encontró el hábito para actualizar" });
-    res.json(updatedHabit);
-  } catch (err) {
-    res.status(400).json({ error: "Error al actualizar: " + err.message });
-  }
-});
-
-// 4. ELIMINAR (Baja)
-router.delete('/:id', async (req, res) => {
-  try {
-    const result = await Habit.findByIdAndDelete(req.params.id);
-    if (!result) return res.status(404).json({ message: "No se encontró el hábito para eliminar" });
-    res.json({ message: "Hábito eliminado con éxito" });
-  } catch (err) {
-    res.status(400).json({ error: "Error al eliminar: " + err.message });
-  }
-});
-
+const timeDifferenceInHours = (date1, date2) =>{
+  const differenceMs = Math.abs(date1 - date2);
+  return differenceMs / (1000 * 60 * 60);
+}
+const timeDifferenceInDays = (date1, date2) =>{
+  const differenceMs = Math.abs(date1 - date2);
+  return Math.floor(differenceMs / (1000 * 60 * 60 * 24));
+}
 module.exports = router;
