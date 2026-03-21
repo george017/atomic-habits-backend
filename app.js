@@ -16,13 +16,16 @@ app.use(cors({
   credentials: true
 }));
 
+app.set('views', path.join(__dirname, 'views'));
+app.set('view engine', 'jade');
+
 app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 
 // RUTAS (Ajustado para evitar duplicados)
-app.use('/', habitsRouter); 
+app.use('/api', habitsRouter); 
 app.use('/users', usersRouter);
 
 module.exports = app;

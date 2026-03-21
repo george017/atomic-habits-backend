@@ -4,7 +4,8 @@ const bcrypt = require('bcryptjs');
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
 
-/* GET users listing. */
+
+
 router.get('/', function(req, res, next) {
   res.send('respond with a resource');
 });
@@ -45,10 +46,11 @@ router.post('/login', async function(req, res, next) {
     const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
     res.cookie('habitToken', token, {
       httpOnly: false, // Previene acceso desde JavaScript (XSS)
-      secure: process.env.NODE_ENV === 'production', // Solo en HTTPS en producción
-      sameSite: 'Strict', // Evita envío en otros sitios
+      secure: false, // Solo en HTTPS en producción
+      sameSite: "lax", // Evita envío en otros sitios
       maxAge: 7 * (24) * 60 * 60 * 1000 // 7 días de duración
   });
+
     res.json({ message: "Inicio de sesión exitoso", token });
 } catch (error) {
     res.status(500).json({ error: "Error en el login", "description":error.toString() });
