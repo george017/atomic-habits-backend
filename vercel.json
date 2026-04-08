@@ -1,0 +1,20 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "app.js",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "app.js"
+    }
+  ],
+  "env": {
+    "PORT": "3002",
+    "MONGO_URI": "mongodb+srv://cbarillastech:ehVH6IT4QmMOpk1T@cluster0.dptep.mongodb.net/habitosApp?retryWrites=true&w=majority&appName=Cluster0",
+    "JWT_SECRET": "ProgramaciónAvanzada"
+  }
+}
